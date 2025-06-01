@@ -1,16 +1,30 @@
+//
+//  MainTabView.swift
+//  IoT-Air-Quality-iOS
+//
+//  Created by HyungJun Lee on 5/28/25.
+//
+
 import SwiftUI
 
 struct MainTabView: View {
+    @EnvironmentObject var appState: AppState
+
     var body: some View {
         TabView {
-            // 실제 구현된 HomeView로 교체 필요
-            Text("Home View")
-                .tabItem {
-                    Image(systemName: "house")
-                    Text("Home")
+            // 연결 여부에 따라 Home 뷰 분기
+            Group {
+                if appState.isConnected {
+                    ConnectedView()
+                } else {
+                    DisconnectedView()
                 }
+            }
+            .tabItem {
+                Image(systemName: "house")
+                Text("Home")
+            }
 
-            // 실제 구현된 HistoryView로 교체 필요
             Text("History View")
                 .tabItem {
                     Image(systemName: "clock")

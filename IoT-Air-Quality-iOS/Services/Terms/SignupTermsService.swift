@@ -1,9 +1,21 @@
+//
+//  SignupTermsService.swift
+//  IoT-Air-Quality-iOS
+//
+//  Created by HyungJun Lee on 5/26/25.
+//
+
+
 import Foundation
 
-final class SignUpTermsService {
-    static let shared = SignUpTermsService()
+final class SignupTermsService {
+    static let shared = SignupTermsService()
     
     private let baseURL = APIConstants.baseURL
+    
+    private struct TermsWrapper: Decodable {
+        let terms: [Term]
+    }
     
     func fetchTerms(accessToken: String, completion: @escaping ([Term]?) -> Void) {
         guard let url = URL(string: "\(baseURL)/api/v1/air-quality-data/terms") else {

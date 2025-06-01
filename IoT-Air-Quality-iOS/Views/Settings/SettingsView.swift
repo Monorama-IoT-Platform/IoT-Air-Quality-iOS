@@ -1,78 +1,96 @@
 //
-//  AirQualitySettingsView.swift
+//  SettingsView.swift
 //  IoT-Air-Quality-iOS
 //
 //  Created by HyungJun Lee on 5/28/25.
 //
 
-
 import SwiftUI
 
-struct AirQualitySettingsView: View {
+struct SettingsView: View {
     @State private var selectedProject: String = ""
-    @State private var projectList: [String] = ["Loading..."]
     @State private var showProjectInfo = false
-    @StateObject private var viewModel = SignupTermsViewModel()
+    @StateObject private var viewModel = SettingsViewModel()
     @EnvironmentObject var appState: AppState
     @State private var showingTermIndex: IdentifiableInt? = nil
 
+    let termsTitles = [
+        "Privacy Policy",
+        "Terms of Service",
+        "Consent of Health",
+        "Consent of Air Data",
+        "Location Data Terms of Service"
+    ]
+
     var body: some View {
-        VStack(spacing: 0) {
+        settingsContent
+            .onAppear {
+                viewModel.fetchProjects {
+                    if let first = viewModel.projectList.first {
+                        selectedProject = first.projectTitle
+                    }
+                }
+                viewModel.loadTerms()
+            }
+    }
+
+    var settingsContent: some View {
+        VStack(spacing: 16) {
             // 상단 바
             HStack {
                 Spacer()
                 Button("Logout") {
-                    // 로그아웃 처리 예정
+                    appState.isLoggedIn = false
+                    appState.nextScreen = .login
+                    TokenManager.shared.clearTokens()
                 }
-                .padding()
+                .padding(EdgeInsets(top: 10, leading: 0, bottom: 0, trailing: 15))
             }
 
             // 로고 및 드롭다운
-            VStack(spacing: 8) {
-                Image("app_logo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 100, height: 100)
-                Text("Project Selection")
-                    .font(.headline)
-                HStack {
-                    Picker("Select a project", selection: $selectedProject) {
-                        ForEach(projectList, id: \ .self) { project in
-                            Text(project)
-                        }
-                    }
-                    .pickerStyle(.wheel)
-                    .frame(maxWidth: .infinity)
+            Image("app_logo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 100, height: 100)
 
-                    Button(action: {
-                        showProjectInfo = true
-                    }) {
-                        Image(systemName: "info.circle")
+            Spacer()
+
+            Text("Project Selection")
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 30)
+
+            HStack {
+                Picker("Select a project", selection: $selectedProject) {
+                    ForEach(viewModel.projectList.map { $0.projectTitle }, id: \ .self) { project in
+                        Text(project)
                     }
                 }
+                .pickerStyle(.menu)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 20)
+
+                Button(action: {
+                    showProjectInfo = true
+                }) {
+                    Image(systemName: "info.circle")
+                }
+                .padding(.trailing, 20)
             }
-            .padding()
 
             // Kibana / Metadata 버튼
             VStack(spacing: 16) {
-                Button(action: {
-                    // Kibana 웹 링크 이동 예정
-                }) {
+                Button(action: {}) {
                     HStack {
                         Image(systemName: "link")
                         Text("View data on Web")
-                        Spacer()
                     }
                 }
                 .buttonStyle(.bordered)
 
-                Button(action: {
-                    // MetaData 입력 웹 링크 이동 예정
-                }) {
+                Button(action: {}) {
                     HStack {
                         Image(systemName: "link")
                         Text("Input Meta Data on Web")
-                        Spacer()
                     }
                 }
                 .buttonStyle(.bordered)
@@ -81,15 +99,18 @@ struct AirQualitySettingsView: View {
 
             // 약관 및 버튼
             VStack(alignment: .leading, spacing: 10) {
-                ForEach(0..<2, id: \ .self) { index in
+                ForEach(0..<5, id: \ .self) { index in
                     HStack {
-                        Text(viewModel.titleFor(index: index))
+                        Text(termsTitles[index])
                         Spacer()
                         Button("[View]") {
                             showingTermIndex = IdentifiableInt(value: index)
                         }
                         Toggle("", isOn: $viewModel.agreements[index])
                             .labelsHidden()
+                            .disabled(false)
+                        // 프로젝트 등록 여부에 따라 달라져야 함. 현재 임시처리
+//                            .disabled(viewModel.getProjectInfo(for: selectedProject) != nil)
                     }
                 }
             }
@@ -104,63 +125,36 @@ struct AirQualitySettingsView: View {
                         .frame(maxWidth: .infinity, minHeight: 55)
                 }
                 .buttonStyle(.bordered)
+                // 프로젝트 등록 여부에 따라 달라져야 함. 현재 임시처리
+//                .disabled(viewModel.getProjectInfo(for: selectedProject) != nil)
 
                 Button(action: {
-                    viewModel.determineNextScreen(appState: appState)
+                    if let project = viewModel.getProjectInfo(for: selectedProject) {
+                        viewModel.participateInProject(projectId: project.id) { success in
+                            // 참여 성공 여부에 따라 로직 처리 가능
+                        }
+                    }
                 }) {
+                    // + 눌렀을 때 DisconnectedView의 isProjectJoined가 바뀌어야 함.
+                    // 프로젝트 등록 여부에 따라 달라져야 함. 현재 임시처리
+//                    Text(viewModel.getProjectInfo(for: selectedProject) != nil ? "Registered" : "Register")
                     Text("Register")
                         .font(.title)
                         .frame(maxWidth: .infinity, minHeight: 55)
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(!viewModel.allAgreed)
+                // 프로젝트 등록 여부에 따라 달라져야 함. 현재 임시처리
+                .disabled(!viewModel.allAgreed /*|| viewModel.getProjectInfo(for: selectedProject) != nil*/)
             }
             .padding(.horizontal)
 
             Spacer()
-
-            // 하단 탭바
-            HStack {
-                Spacer()
-                VStack {
-                    Image(systemName: "house")
-                    Text("Home").font(.caption)
-                }
-                Spacer()
-                VStack {
-                    Image(systemName: "clock")
-                    Text("History").font(.caption)
-                }
-                Spacer()
-                VStack {
-                    Image(systemName: "gear")
-                    Text("Setting").font(.caption)
-                }
-                Spacer()
-            }
-            .padding()
-            .background(Color(UIColor.systemGray6))
         }
         .sheet(item: $showingTermIndex) { identifiable in
             ScrollView {
-                if viewModel.terms[identifiable.value] == nil {
-                    VStack {
-                        Spacer(minLength: 100)
-                        ProgressView("Loading...")
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    Text(viewModel.contentFor(index: identifiable.value))
-                        .padding()
-                }
+                Text(viewModel.contentFor(index: identifiable.value))
+                    .padding()
             }
-        }
-        .onAppear {
-            viewModel.loadTerms()
-            // 실제 프로젝트 목록 API 연동 필요
-            projectList = ["Asthma Study", "School Air Quality"]
-            selectedProject = projectList.first ?? ""
         }
         .sheet(isPresented: $showProjectInfo) {
             VStack {
@@ -175,7 +169,7 @@ struct AirQualitySettingsView: View {
 
 struct AirQualitySettingsView_Previews: PreviewProvider {
     static var previews: some View {
-        AirQualitySettingsView()
+        SettingsView()
             .environmentObject(AppState())
     }
 }

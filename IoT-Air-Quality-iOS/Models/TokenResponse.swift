@@ -7,5 +7,7 @@
 
 
 struct TokenResponse: Codable {
-    let accessToken: String
+    let success: Bool
+    let data: JwtToken?
+    let error: String?
 }

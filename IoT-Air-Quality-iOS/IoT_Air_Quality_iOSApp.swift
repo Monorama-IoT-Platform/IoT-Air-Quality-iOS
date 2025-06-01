@@ -9,9 +9,21 @@ import SwiftUI
 
 @main
 struct IoT_Air_Quality_iOSApp: App {
+    @StateObject private var appState = AppState()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
+                .environmentObject(appState)
+//            LoginView().environmentObject(appState)
+            
+//            if appState.isLoggedIn {
+//                MainView()
+//                    .environmentObject(appState)
+//            } else {
+//                LoginView()
+//                    .environmentObject(appState)
+//            }
         }
     }
 }

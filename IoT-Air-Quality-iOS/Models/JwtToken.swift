@@ -6,7 +6,7 @@
 //
 
 
-struct JwtTokenDto: Codable {
+struct JwtToken: Codable {
     let accessToken: String
     let refreshToken: String
 }

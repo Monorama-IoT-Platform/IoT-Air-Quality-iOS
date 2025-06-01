@@ -1,12 +1,31 @@
+//
+//  JWTDecoder.swift
+//  IoT-Air-Quality-iOS
+//
+//  Created by HyungJun Lee on 5/26/25.
+//
 import Foundation
 
+struct JWTClaims: Decodable {
+    let uid: String?
+    let role: String?
+    let iat: Int?
+    let exp: Int?
+    
+    enum CodingKeys: String, CodingKey {
+        case uid
+        case role = "rol"
+        case iat
+        case exp
+    }
+}
+
 struct JWTDecoder {
-    static func decodeRole(from accessToken: String) -> String? {
-        let segments = accessToken.split(separator: ".")
+    static func decode(token: String) -> JWTClaims? {
+        let segments = token.split(separator: ".")
         guard segments.count == 3 else { return nil }
 
-        let payloadSegment = segments[1]
-        var base64 = String(payloadSegment)
+        var base64 = String(segments[1])
             .replacingOccurrences(of: "-", with: "+")
             .replacingOccurrences(of: "_", with: "/")
 
@@ -15,11 +34,10 @@ struct JWTDecoder {
         }
 
         guard let payloadData = Data(base64Encoded: base64),
-              let payloadJSON = try? JSONSerialization.jsonObject(with: payloadData) as? [String: Any],
-              let role = payloadJSON["rol"] as? String ?? payloadJSON["role"] as? String else {
+              let claims = try? JSONDecoder().decode(JWTClaims.self, from: payloadData) else {
             return nil
         }
 
-        return role
+        return claims
     }
 }

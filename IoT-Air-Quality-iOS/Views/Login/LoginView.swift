@@ -1,54 +1,73 @@
+//
+//  LoginView.swift
+//  IoT-Air-Quality-iOS
+//
+//  Created by HyungJun Lee on 5/23/25.
+//
+
+
 import SwiftUI
+import AuthenticationServices
 
 struct LoginView: View {
+    @StateObject private var viewModel = LoginViewModel()
+    @EnvironmentObject var appState: AppState
+
     var body: some View {
         VStack {
             Spacer(minLength: 60)
 
-            // 상단 문구
             Text("Air Quality Collection")
-                .font(.title2)
+                .font(.largeTitle)
                 .fontWeight(.semibold)
-                .padding(.bottom, 16)
+                .padding(.bottom, 80)
 
-            // 앱 로고
             Image("app_logo")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 120, height: 120)
-                .padding(.bottom, 40)
+                .frame(width: 200, height: 200)
+                .padding(.bottom, 10)
 
             Spacer()
 
-            // 소셜 로그인 버튼 (Apple, Google)
             VStack(spacing: 16) {
-                SignInWithAppleButton(
-                    onRequest: { request in
-                        // Handle Apple request
-                    },
-                    onCompletion: { result in
-                        // Handle Apple result
-                    }
-                )
-                .frame(height: 50)
-                .signInWithAppleButtonStyle(.black)
-
                 Button(action: {
-                    // Handle Google login
+                    viewModel.handleAppleLogin(appState: appState)
                 }) {
                     HStack {
-                        Image("google_logo")
+                        Spacer()
+                        Image(systemName: "apple.logo")
                             .resizable()
-                            .frame(width: 20, height: 20)
-                        Text("Continue with Google")
-                            .font(.subheadline)
+                            .scaledToFit()
+                            .frame(width: 22, height: 22)
                             .foregroundColor(.black)
+                        Spacer()
+                        Text("Continue with Apple")
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.black)
+                        Spacer()
                     }
-                    .frame(maxWidth: .infinity)
                     .padding()
+                    .frame(maxWidth: .infinity)
                     .background(Color.white)
-                    .cornerRadius(8)
-                    .shadow(color: .gray.opacity(0.3), radius: 2, x: 0, y: 1)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 45)
+                            .stroke(Color.black.opacity(0.4), lineWidth: 3)
+                    )
+                    .cornerRadius(45)
+                }
+                .disabled(viewModel.isLoading)
+
+                if viewModel.isLoading {
+                    ProgressView("로그인 중...")
+                        .padding(.top)
+                }
+
+                if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .padding(.top, 8)
                 }
             }
             .padding(.horizontal)
@@ -58,4 +77,9 @@ struct LoginView: View {
         .background(Color(.systemBackground))
         .ignoresSafeArea()
     }
+}
+
+
+#Preview {
+    LoginView()
 }

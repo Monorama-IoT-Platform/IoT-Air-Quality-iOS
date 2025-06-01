@@ -6,9 +6,22 @@
 //
 
 import Foundation
-import Combine
+
+enum AppScreen {
+    case login
+    case signUpTerms
+    case signUpRegister
+    case disconnectedMain
+//    case main
+}
 
 final class AppState: ObservableObject {
-    @Published var isLoggedIn: Bool = TokenManager.shared.getAccessToken() != nil
+    @Published var isLoggedIn: Bool = false
+    @Published var nextScreen: AppScreen = .login
+    @Published var signupPrefillInfo: UserSignupInfo? = nil
+    
+    // 🔵 Bluetooth 연결 상태 추가
+    @Published var isConnected: Bool = false
+    @Published var connectedDeviceName: String = ""
+    @Published var connectedDeviceMac: String = ""
 }
-/Users/hyungjunlee/Developer/IoT-Air-Quality-iOS/IoT-Air-Quality-iOS/ViewModels/AppState.swift

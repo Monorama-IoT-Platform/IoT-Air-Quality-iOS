@@ -5,7 +5,6 @@
 //  Created by HyungJun Lee on 5/26/25.
 //
 
-
 import SwiftUI
 
 struct RootView: View {
@@ -17,8 +16,11 @@ struct RootView: View {
             LoginView()
         case .signUpTerms:
             SignupTermsView()
-        case .home:
-            HomeView()
+        case .signUpRegister:
+            SignupRegisterView(prefillInfo: appState.signupPrefillInfo)
+        case .disconnectedMain:
+            MainTabView()
         }
+        
     }
 }
