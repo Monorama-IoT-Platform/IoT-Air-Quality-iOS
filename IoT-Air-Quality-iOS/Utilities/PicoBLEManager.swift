@@ -12,7 +12,7 @@ protocol PicoBLEManagerDelegate: AnyObject {
     func didReceiveSensorData(_ data: ParsedSensorData)
 }
 
-final class PicoBLEManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
+final class PicoBLEManager: NSObject, ObservableObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     static let shared = PicoBLEManager()
 
     private var centralManager: CBCentralManager!
@@ -24,6 +24,9 @@ final class PicoBLEManager: NSObject, CBCentralManagerDelegate, CBPeripheralDele
     private let sensorUUID = CBUUID(string: "0000FFB3-0000-1000-8000-00805F9B34FB")
     private let scanSubject = PassthroughSubject<[CBPeripheral], Never>()
     private let dataSubject = PassthroughSubject<ParsedSensorData, Never>()
+
+    // ✅ 연결된 디바이스 콜백
+    var onDeviceConnected: ((CBPeripheral) -> Void)?
 
     var scanPublisher: AnyPublisher<[CBPeripheral], Never> {
         scanSubject.eraseToAnyPublisher()
@@ -40,14 +43,6 @@ final class PicoBLEManager: NSObject, CBCentralManagerDelegate, CBPeripheralDele
 
     func startScanning() {
         discoveredPeripherals.removeAll()
-
-        let serviceUUIDs = [
-            CBUUID(string: "0000180a-0000-1000-8000-00805f9b34fb"),
-            CBUUID(string: "0000ffe0-0000-1000-8000-00805f9b34fb"),
-            CBUUID(string: "0000ffb0-0000-1000-8000-00805f9b34fb"),
-            CBUUID(string: "0000ffd0-0000-1000-8000-00805f9b34fb"),
-            CBUUID(string: "0000ffc0-0000-1000-8000-00805f9b34fb")
-        ]
         centralManager.scanForPeripherals(withServices: nil, options: nil)
     }
 
@@ -97,6 +92,11 @@ final class PicoBLEManager: NSObject, CBCentralManagerDelegate, CBPeripheralDele
 
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         print("✅ BLE 연결됨: \(peripheral.name ?? "이름 없음")")
+        picoPeripheral = peripheral
+
+        // ✅ 연결 이벤트 콜백 호출
+        onDeviceConnected?(peripheral)
+
         peripheral.delegate = self
         peripheral.discoverServices(nil)
     }

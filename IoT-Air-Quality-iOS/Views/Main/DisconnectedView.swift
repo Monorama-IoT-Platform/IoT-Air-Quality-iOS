@@ -79,7 +79,7 @@ struct DisconnectedView: View {
                             VStack(alignment: .leading) {
                                 Text(device.name)
                                     .font(.body)
-                                Text(device.macAddress)
+                                Text(device.uuid)
                                     .font(.caption)
                                     .foregroundColor(.gray)
                             }
@@ -114,7 +114,7 @@ struct DisconnectedView: View {
             .receive(on: DispatchQueue.main)
             .sink { peripherals in
                 self.availableDevices = peripherals.map {
-                    BluetoothDevice(name: $0.name ?? "Unknown", macAddress: $0.identifier.uuidString)
+                    BluetoothDevice(name: $0.name ?? "Unknown", uuid: $0.identifier.uuidString)
                 }
                 self.isScanning = false
             }
@@ -130,7 +130,7 @@ struct DisconnectedView: View {
 
     private func connectToDevice(_ device: BluetoothDevice) {
         print("Connecting to \(device.name)...")
-        PicoBLEManager.shared.connectToPeripheral(with: device.macAddress)
+        PicoBLEManager.shared.connectToPeripheral(with: device.uuid)
         appState.isConnected = true
         showModal = false
     }

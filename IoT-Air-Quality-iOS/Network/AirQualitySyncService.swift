@@ -8,13 +8,12 @@
 import Foundation
 
 protocol AirQualitySyncEncoder {
-    func encode(_ data: [AirQualityData]) throws -> Data
+    func encode(_ dataList: AirQualityDataList) throws -> Data
 }
 
 struct JSONSyncEncoder: AirQualitySyncEncoder {
-    func encode(_ data: [AirQualityData]) throws -> Data {
-        let wrapped = ["airQualityDataList": data]
-        return try JSONEncoder().encode(wrapped)
+    func encode(_ dataList: AirQualityDataList) throws -> Data {
+        return try JSONEncoder().encode(dataList)
     }
 }
 
@@ -27,7 +26,8 @@ final class AirQualitySyncService {
     }
 
     func sync(_ data: [AirQualityData], accessToken: String) async throws {
-        let body = try encoder.encode(data)
+        let dataList = AirQualityDataList(airQualityDataList: data)
+        let body = try encoder.encode(dataList)
 
         guard let url = URL(string: "\(baseURL)/api/v1/air-quality-data/sync") else {
             throw URLError(.badURL)
