@@ -17,6 +17,7 @@ final class SettingsViewModel: ObservableObject {
     @Published var projectList: [Project] = []
     @Published var agreements: [Bool] = Array(repeating: false, count: 5)
     @Published var terms: [Int: String] = [:]
+    @Published var selectedProjectDetail: ProjectDetail?
 
     var allAgreed: Bool {
         agreements.allSatisfy { $0 }
@@ -104,4 +105,35 @@ final class SettingsViewModel: ObservableObject {
             }
         }.resume()
     }
+    
+    func fetchProjectDetail(projectId: Int, completion: (() -> Void)? = nil) {
+        guard let accessToken = TokenManager.shared.getAccessToken() else {
+            print("❌ Access token 없음")
+            return
+        }
+
+        guard let url = URL(string: "\(baseURL)/api/v1/air-quality-data/projects/\(projectId)") else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data, error == nil else {
+                print("❌ 프로젝트 상세 정보 요청 실패: \(error?.localizedDescription ?? "Unknown error")")
+                return
+            }
+
+            do {
+                let decoded = try JSONDecoder().decode(ServerResponse<ProjectDetail>.self, from: data)
+                DispatchQueue.main.async {
+                    self.selectedProjectDetail = decoded.data
+                    completion?()
+                }
+            } catch {
+                print("❌ 디코딩 실패: \(error)")
+            }
+        }.resume()
+    }
+
 }

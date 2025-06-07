@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @State private var selectedProject: String = ""
+    @State private var selectedProjectId: Int? = nil
     @State private var showProjectInfo = false
     @StateObject private var viewModel = SettingsViewModel()
     @EnvironmentObject var appState: AppState
@@ -27,7 +27,7 @@ struct SettingsView: View {
             .onAppear {
                 viewModel.fetchProjects {
                     if let first = viewModel.projectList.first {
-                        selectedProject = first.projectTitle
+                        selectedProjectId = first.id
                     }
                 }
                 viewModel.loadTerms()
@@ -36,7 +36,7 @@ struct SettingsView: View {
 
     var settingsContent: some View {
         VStack(spacing: 16) {
-            // 상단 바
+            // 로그아웃 버튼
             HStack {
                 Spacer()
                 Button("Logout") {
@@ -60,9 +60,9 @@ struct SettingsView: View {
                 .padding(.leading, 30)
 
             HStack {
-                Picker("Select a project", selection: $selectedProject) {
-                    ForEach(viewModel.projectList.map { $0.projectTitle }, id: \ .self) { project in
-                        Text(project)
+                Picker("Select a project", selection: $selectedProjectId) {
+                    ForEach(viewModel.projectList, id: \.id) { project in
+                        Text(project.projectTitle).tag(project.id as Int?)
                     }
                 }
                 .pickerStyle(.menu)
@@ -70,7 +70,11 @@ struct SettingsView: View {
                 .padding(.leading, 20)
 
                 Button(action: {
-                    showProjectInfo = true
+                    if let id = selectedProjectId {
+                        viewModel.fetchProjectDetail(projectId: id) {
+                            showProjectInfo = true
+                        }
+                    }
                 }) {
                     Image(systemName: "info.circle")
                 }
@@ -129,9 +133,9 @@ struct SettingsView: View {
 //                .disabled(viewModel.getProjectInfo(for: selectedProject) != nil)
 
                 Button(action: {
-                    if let project = viewModel.getProjectInfo(for: selectedProject) {
-                        viewModel.participateInProject(projectId: project.id) { success in
-                            // 참여 성공 여부에 따라 로직 처리 가능
+                    if let id = selectedProjectId {
+                        viewModel.participateInProject(projectId: id) { success in
+                            // 등록 결과 처리
                         }
                     }
                 }) {
@@ -157,11 +161,68 @@ struct SettingsView: View {
             }
         }
         .sheet(isPresented: $showProjectInfo) {
-            VStack {
-                Text("Project Info for \(selectedProject)")
-                    .font(.title)
+            if let info = viewModel.selectedProjectDetail {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        // Metadata Section
+                        Text("📌 Project Information")
+                            .font(.title2).bold()
+
+                        ForEach(info.metadataFields, id: \.label) { field in
+                            HStack {
+                                Text(field.label)
+                                Spacer()
+                                Text(field.value)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+
+                        Divider()
+
+                        // Personal Info Section
+                        Text("🔐 Personal Information").bold()
+
+                        ForEach(info.personalFields, id: \.label) { field in
+                            HStack {
+                                Text(field.label)
+                                Spacer()
+                                Image(systemName: field.value ? "checkmark.square" : "square")
+                                    .foregroundColor(.blue)
+                            }
+                        }
+
+                        Divider()
+
+                        // Health Data Section
+                        Text("💓 Health Data").bold()
+
+                        ForEach(info.healthFields, id: \.label) { field in
+                            HStack {
+                                Text(field.label)
+                                Spacer()
+                                Image(systemName: field.value ? "checkmark.square" : "square")
+                                    .foregroundColor(.blue)
+                            }
+                        }
+
+                        Divider()
+
+                        // Air Quality Data Section
+                        Text("🌫️ Air Quality Data").bold()
+
+                        ForEach(info.airFields, id: \.label) { field in
+                            HStack {
+                                Text(field.label)
+                                Spacer()
+                                Image(systemName: field.value ? "checkmark.square" : "square")
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                    }
                     .padding()
-                Spacer()
+                }
+            } else {
+                ProgressView()
             }
         }
     }
